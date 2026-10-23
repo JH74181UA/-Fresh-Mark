@@ -1,477 +1,231 @@
+// src/screens/ProfileScreen.js
 import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SHADOWS } from '../constants/colors';
-import { Header } from '../components/Header';
-import { CustomButton } from '../components/CustomButton';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
-import { useFavorites } from '../context/FavoritesContext';
+import { Colors, FontSizes, Spacing, BorderRadius } from '../theme';
+import { useApp } from '../context/AppContext';
 
-export const ProfileScreen = ({ navigation }) => {
-  const { user, isAdmin, isSuperAdmin, logout, quickSwitchRole } = useAuth();
-  const { totalItemsCount } = useCart();
-  const { favoritesCount } = useFavorites();
+const MenuItem = ({ icon, label, value, onPress, color }) => (
+  <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
+    <View style={[styles.menuIcon, { backgroundColor: (color || Colors.primary) + '20' }]}>
+      <Ionicons name={icon} size={18} color={color || Colors.primary} />
+    </View>
+    <View style={styles.menuContent}>
+      <Text style={styles.menuLabel}>{label}</Text>
+      {value && <Text style={styles.menuValue} numberOfLines={1}>{value}</Text>}
+    </View>
+    <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
+  </TouchableOpacity>
+);
+
+const StatBox = ({ value, label, icon }) => (
+  <View style={styles.statBox}>
+    <Text style={styles.statIcon}>{icon}</Text>
+    <Text style={styles.statValue}>{value}</Text>
+    <Text style={styles.statLabel}>{label}</Text>
+  </View>
+);
+
+const ProfileScreen = ({ navigation }) => {
+  const { user, signOut, cartItems, favorites, getCartCount } = useApp();
 
   const handleLogout = () => {
     Alert.alert(
       'Sign Out',
-      'Are you sure you want to sign out from FreshMart?',
+      'Are you sure you want to sign out?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Sign Out',
           style: 'destructive',
-          onPress: () => logout(),
+          onPress: signOut,
         },
       ]
     );
   };
 
-  // If Super Admin or Admin is viewing customer-only area
-  if (isSuperAdmin) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <Header title="Super Admin Area" showMenu={true} showCart={false} />
-        <View style={styles.adminNoticeContainer}>
-          <View style={styles.adminNoticeCard}>
-            <View style={[styles.adminIconCircle, { backgroundColor: COLORS.superAdminBadgeLight }]}>
-              <Ionicons name="ribbon" size={40} color={COLORS.superAdminBadge} />
-            </View>
-            <Text style={styles.adminNoticeTitle}>Super Admin Session</Text>
-            <Text style={styles.adminNoticeDesc}>
-              You are signed in as Super Admin ({user?.name}). Manage master credentials, phone, email, and administrative controls in your dedicated Super Admin profile.
-            </Text>
-            <CustomButton
-              title="Open Super Admin Profile"
-              icon="person-circle-outline"
-              onPress={() => navigation.navigate('SuperAdminProfile')}
-              style={{ marginTop: 14, width: '100%', backgroundColor: COLORS.superAdminBadge }}
-            />
-            <CustomButton
-              title="Switch to Customer Role"
-              icon="swap-horizontal"
-              type="outline"
-              onPress={() => quickSwitchRole('customer')}
-              style={{ marginTop: 10, width: '100%' }}
-            />
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (isAdmin) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <Header title="Customer Profile" showMenu={true} showCart={true} />
-        <View style={styles.adminNoticeContainer}>
-          <View style={styles.adminNoticeCard}>
-            <View style={styles.adminIconCircle}>
-              <Ionicons name="shield" size={40} color={COLORS.adminBadge} />
-            </View>
-            <Text style={styles.adminNoticeTitle}>Admin Mode Active</Text>
-            <Text style={styles.adminNoticeDesc}>
-              The Customer Profile & Edit features are restricted to Customer accounts in accordance with Role-Based Access Control requirements.
-            </Text>
-            <View style={styles.adminInfoBox}>
-              <Text style={styles.adminInfoLabel}>Logged in as:</Text>
-              <Text style={styles.adminInfoValue}>{user?.name}</Text>
-              <Text style={styles.adminInfoEmail}>{user?.email}</Text>
-            </View>
-            <CustomButton
-              title="Switch to Customer Role"
-              icon="swap-horizontal"
-              onPress={() => quickSwitchRole('customer')}
-              style={{ marginTop: 20, width: '100%' }}
-            />
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const initial = user?.name?.charAt(0)?.toUpperCase() || '?';
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Header
-        title="My Profile"
-        showMenu={true}
-        showCart={true}
-        rightComponent={
-          <TouchableOpacity
-            style={styles.editHeaderBtn}
-            onPress={() => navigation.navigate('EditProfile')}
-          >
-            <Ionicons name="create-outline" size={22} color={COLORS.primary} />
-          </TouchableOpacity>
-        }
-      />
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.scroll}
+      showsVerticalScrollIndicator={false}
+    >
+      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Profile Card */}
-        <View style={[styles.profileCard, SHADOWS.soft]}>
-          <View style={styles.avatarContainer}>
-            <Image
-              source={{ uri: user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80' }}
-              style={styles.avatar}
-            />
-            <TouchableOpacity
-              style={styles.avatarCameraBtn}
-              onPress={() => navigation.navigate('EditProfile')}
-            >
-              <Ionicons name="camera" size={14} color={COLORS.white} />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.userName}>{user?.name || 'Customer'}</Text>
-          <Text style={styles.userEmail}>{user?.email || 'customer@freshmart.com'}</Text>
-
-          <View style={styles.roleBadgeContainer}>
-            <Ionicons name="shield-checkmark" size={14} color={COLORS.customerBadge} />
-            <Text style={styles.roleBadgeText}>Verified Customer Account</Text>
-          </View>
+      {/* Profile Header */}
+      <View style={styles.header}>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarText}>{initial}</Text>
         </View>
-
-        {/* Quick Stats Grid */}
-        <View style={styles.statsRow}>
-          <TouchableOpacity
-            style={[styles.statBox, SHADOWS.soft]}
-            onPress={() => navigation.navigate('CartTab')}
-          >
-            <Text style={styles.statNumber}>{totalItemsCount}</Text>
-            <Text style={styles.statLabel}>Cart Items</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.statBox, SHADOWS.soft]}
-            onPress={() => navigation.navigate('FavoritesTab')}
-          >
-            <Text style={styles.statNumber}>{favoritesCount}</Text>
-            <Text style={styles.statLabel}>Favorites</Text>
-          </TouchableOpacity>
-
-          <View style={[styles.statBox, SHADOWS.soft]}>
-            <Text style={styles.statNumber}>Gold</Text>
-            <Text style={styles.statLabel}>Membership</Text>
-          </View>
+        <Text style={styles.name}>{user?.name}</Text>
+        <Text style={styles.email}>{user?.email}</Text>
+        <View style={[styles.roleBadge, user?.role === 'admin' && styles.adminBadge]}>
+          <Text style={styles.roleText}>
+            {user?.role === 'admin' ? '🔐 Admin' : '👤 Customer'}
+          </Text>
         </View>
+      </View>
 
-        {/* Customer Details Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Account Information</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
-            <Text style={styles.editSectionText}>Edit Details</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Stats */}
+      <View style={styles.statsRow}>
+        <StatBox value={getCartCount()} label="Cart Items" icon="🛒" />
+        <StatBox value={favorites.length} label="Favorites" icon="❤️" />
+        <StatBox value={cartItems.length} label="Products" icon="📦" />
+      </View>
 
-        <View style={[styles.infoCard, SHADOWS.soft]}>
-          <View style={styles.infoRow}>
-            <View style={styles.infoIconBox}>
-              <Ionicons name="person-outline" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.infoDetails}>
-              <Text style={styles.infoLabel}>Full Name</Text>
-              <Text style={styles.infoValue}>{user?.name || 'Alex Johnson'}</Text>
-            </View>
-          </View>
+      {/* Account Info */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Account Information</Text>
+        <MenuItem icon="person-outline" label="Full Name" value={user?.name} onPress={() => navigation.navigate('EditProfile')} />
+        <MenuItem icon="mail-outline" label="Email" value={user?.email} onPress={() => navigation.navigate('EditProfile')} />
+        <MenuItem icon="call-outline" label="Phone" value={user?.phone || 'Not set'} onPress={() => navigation.navigate('EditProfile')} />
+        <MenuItem icon="location-outline" label="Address" value={user?.address || 'Not set'} onPress={() => navigation.navigate('EditProfile')} />
+      </View>
 
-          <View style={styles.divider} />
+      {/* Actions */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <MenuItem icon="create-outline" label="Edit Profile" onPress={() => navigation.navigate('EditProfile')} />
+        <MenuItem icon="cart-outline" label="My Cart" value={`${getCartCount()} items`} onPress={() => navigation.navigate('Cart')} />
+        <MenuItem icon="heart-outline" label="My Favorites" value={`${favorites.length} items`} onPress={() => navigation.navigate('Favorites')} />
+        <MenuItem icon="bag-outline" label="Browse Products" onPress={() => navigation.navigate('Products')} />
+      </View>
 
-          <View style={styles.infoRow}>
-            <View style={styles.infoIconBox}>
-              <Ionicons name="mail-outline" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.infoDetails}>
-              <Text style={styles.infoLabel}>Email Address</Text>
-              <Text style={styles.infoValue}>{user?.email || 'alex.customer@freshmart.com'}</Text>
-            </View>
-          </View>
+      {/* App Info */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>App Information</Text>
+        <MenuItem icon="information-circle-outline" label="App Version" value="1.0.0" onPress={() => {}} />
+        <MenuItem icon="star-outline" label="Rate the App" onPress={() => Alert.alert('Thank You!', 'Thank you for using FreshMart! 🛒')} />
+        <MenuItem icon="help-circle-outline" label="Help & Support" onPress={() => Alert.alert('Support', 'Email: support@freshmart.com')} />
+      </View>
 
-          <View style={styles.divider} />
+      {/* Logout */}
+      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <Ionicons name="log-out-outline" size={20} color={Colors.error} />
+        <Text style={styles.logoutText}>Sign Out</Text>
+      </TouchableOpacity>
 
-          <View style={styles.infoRow}>
-            <View style={styles.infoIconBox}>
-              <Ionicons name="call-outline" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.infoDetails}>
-              <Text style={styles.infoLabel}>Phone Number</Text>
-              <Text style={styles.infoValue}>{user?.phone || '+91 98765 43210'}</Text>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.infoRow}>
-            <View style={styles.infoIconBox}>
-              <Ionicons name="location-outline" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.infoDetails}>
-              <Text style={styles.infoLabel}>Delivery Address</Text>
-              <Text style={styles.infoValue}>
-                {user?.address || 'Apartment 4B, Green Valley Heights, MG Road, Bangalore - 560001'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtonsContainer}>
-          <CustomButton
-            title="Edit Profile Information"
-            icon="create-outline"
-            onPress={() => navigation.navigate('EditProfile')}
-            style={styles.editButton}
-          />
-
-          <CustomButton
-            title="Sign Out"
-            type="outline"
-            icon="log-out-outline"
-            onPress={handleLogout}
-            style={styles.logoutButton}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <Text style={styles.footer}>FreshMart v1.0.0 • MCA Exam 2026</Text>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    paddingBottom: 36,
-  },
-  editHeaderBtn: {
-    padding: 6,
-  },
-  profileCard: {
-    backgroundColor: COLORS.surface,
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 20,
-    padding: 20,
+  screen: { flex: 1, backgroundColor: Colors.background },
+  scroll: { paddingBottom: 100 },
+  header: {
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    paddingTop: 50,
+    paddingBottom: Spacing.xxxl,
+    backgroundColor: '#080808',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
   },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: 12,
-  },
-  avatar: {
+  avatarCircle: {
     width: 90,
     height: 90,
     borderRadius: 45,
-    borderWidth: 3,
-    borderColor: COLORS.primaryLight,
-  },
-  avatarCameraBtn: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    backgroundColor: COLORS.primary,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.white,
+    marginBottom: Spacing.md,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 3,
+    borderColor: Colors.primaryDark,
   },
-  userName: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.textDark,
+  avatarText: { color: Colors.white, fontSize: FontSizes.xxxl, fontWeight: '800' },
+  name: { color: Colors.white, fontSize: FontSizes.xxl, fontWeight: '700', marginBottom: 4 },
+  email: { color: Colors.textSecondary, fontSize: FontSizes.md, marginBottom: Spacing.md },
+  roleBadge: {
+    backgroundColor: Colors.primary + '20',
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Colors.primary + '50',
   },
-  userEmail: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    marginTop: 2,
+  adminBadge: {
+    backgroundColor: '#E67E2220',
+    borderColor: '#E67E2250',
   },
-  roleBadgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.customerBadgeLight,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    marginTop: 10,
-    gap: 6,
-  },
-  roleBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.customerBadge,
-  },
+  roleText: { color: Colors.white, fontSize: FontSizes.sm, fontWeight: '600' },
   statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginTop: 16,
-    gap: 12,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   statBox: {
     flex: 1,
-    backgroundColor: COLORS.surface,
-    paddingVertical: 14,
-    borderRadius: 16,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: Colors.border,
   },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.primary,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 2,
-    fontWeight: '600',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  editSectionText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  infoCard: {
-    backgroundColor: COLORS.surface,
-    marginHorizontal: 16,
-    borderRadius: 20,
-    padding: 16,
+  statIcon: { fontSize: 22, marginBottom: 4 },
+  statValue: { color: Colors.primary, fontSize: FontSizes.xl, fontWeight: '800' },
+  statLabel: { color: Colors.textSecondary, fontSize: FontSizes.xs, fontWeight: '600', textAlign: 'center' },
+  section: {
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: Colors.border,
   },
-  infoRow: {
+  sectionTitle: { color: Colors.white, fontSize: FontSizes.sm, fontWeight: '700', marginBottom: Spacing.sm, textTransform: 'uppercase', letterSpacing: 1, color: Colors.textSecondary },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    gap: Spacing.md,
   },
-  infoIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: COLORS.primaryLight,
+  menuIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  menuContent: { flex: 1 },
+  menuLabel: { color: Colors.white, fontSize: FontSizes.md, fontWeight: '500' },
+  menuValue: { color: Colors.textSecondary, fontSize: FontSizes.xs, marginTop: 2 },
+  logoutBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 14,
-  },
-  infoDetails: {
-    flex: 1,
-  },
-  infoLabel: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    fontWeight: '600',
-  },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.textDark,
-    marginTop: 2,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.borderLight,
-    marginVertical: 10,
-  },
-  actionButtonsContainer: {
-    paddingHorizontal: 16,
-    marginTop: 24,
-    gap: 12,
-  },
-  editButton: {
-    width: '100%',
-  },
-  logoutButton: {
-    width: '100%',
-  },
-  adminNoticeContainer: {
-    flex: 1,
-    padding: 24,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  adminNoticeCard: {
-    backgroundColor: COLORS.surface,
-    padding: 24,
-    borderRadius: 24,
-    alignItems: 'center',
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.error + '15',
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    gap: Spacing.sm,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    width: '100%',
+    borderColor: Colors.error + '30',
+    marginBottom: Spacing.xl,
   },
-  adminIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.adminBadgeLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  adminNoticeTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.textDark,
-    marginBottom: 8,
-  },
-  adminNoticeDesc: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 20,
-  },
-  adminInfoBox: {
-    backgroundColor: COLORS.surfaceVariant,
-    padding: 14,
-    borderRadius: 14,
-    width: '100%',
-    alignItems: 'center',
-  },
-  adminInfoLabel: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-  },
-  adminInfoValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textDark,
-    marginTop: 2,
-  },
-  adminInfoEmail: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
+  logoutText: { color: Colors.error, fontSize: FontSizes.md, fontWeight: '700' },
+  footer: { color: Colors.textSecondary, fontSize: FontSizes.xs, textAlign: 'center', marginBottom: Spacing.xl },
 });
+
+export default ProfileScreen;

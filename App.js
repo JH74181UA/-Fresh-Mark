@@ -1,25 +1,21 @@
+// App.js — Entry point for FreshMart Grocery App
+import 'react-native-gesture-handler';
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AuthProvider } from './src/context/AuthContext';
-import { ProductsProvider } from './src/context/ProductsContext';
-import { FavoritesProvider } from './src/context/FavoritesContext';
-import { CartProvider } from './src/context/CartContext';
-import { AppNavigator } from './src/navigation/AppNavigator';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { AppProvider } from './src/context/AppContext';
+import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <ProductsProvider>
-          <FavoritesProvider>
-            <CartProvider>
-              <StatusBar style="dark" />
-              <AppNavigator />
-            </CartProvider>
-          </FavoritesProvider>
-        </ProductsProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
+      <SafeAreaProvider>
+        <AppProvider>
+          <StatusBar style="light" backgroundColor="#000000" />
+          <AppNavigator />
+        </AppProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

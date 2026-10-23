@@ -1,67 +1,47 @@
+// src/components/CustomButton.js
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../constants/colors';
+import { TouchableOpacity, Text, ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Colors, FontSizes, Spacing, BorderRadius } from '../theme';
 
-export const CustomButton = ({
+const CustomButton = ({
   title,
   onPress,
-  type = 'primary', // 'primary', 'secondary', 'outline', 'danger'
-  size = 'medium',
-  icon,
+  variant = 'primary',
   loading = false,
   disabled = false,
   style,
   textStyle,
+  leftIcon,
 }) => {
-  const getBackgroundColor = () => {
-    if (disabled) return COLORS.border;
-    switch (type) {
-      case 'primary':
-        return COLORS.primary;
-      case 'secondary':
-        return COLORS.secondary;
-      case 'outline':
-        return 'transparent';
-      case 'danger':
-        return COLORS.danger;
-      default:
-        return COLORS.primary;
-    }
-  };
-
-  const getTextColor = () => {
-    if (disabled) return COLORS.textLight;
-    if (type === 'outline') return COLORS.primary;
-    return COLORS.white;
-  };
+  const isOutline = variant === 'outline';
+  const isDanger = variant === 'danger';
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={onPress}
-      disabled={disabled || loading}
       style={[
         styles.button,
-        styles[size],
-        { backgroundColor: getBackgroundColor() },
-        type === 'outline' && styles.outlineBorder,
+        isOutline && styles.outline,
+        isDanger && styles.danger,
+        (disabled || loading) && styles.disabled,
         style,
       ]}
+      onPress={onPress}
+      disabled={disabled || loading}
+      activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator color={getTextColor()} size="small" />
+        <ActivityIndicator color={isOutline ? Colors.primary : Colors.white} size="small" />
       ) : (
         <View style={styles.content}>
-          {icon && (
-            <Ionicons
-              name={icon}
-              size={size === 'small' ? 16 : 20}
-              color={getTextColor()}
-              style={styles.icon}
-            />
-          )}
-          <Text style={[styles.text, { color: getTextColor() }, styles[`${size}Text`], textStyle]}>
+          {leftIcon && <View style={styles.iconWrap}>{leftIcon}</View>}
+          <Text
+            style={[
+              styles.text,
+              isOutline && styles.outlineText,
+              isDanger && styles.dangerText,
+              textStyle,
+            ]}
+          >
             {title}
           </Text>
         </View>
@@ -72,48 +52,44 @@ export const CustomButton = ({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 14,
-    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+  },
+  danger: {
+    backgroundColor: Colors.error,
+  },
+  disabled: {
+    opacity: 0.5,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: {
-    marginRight: 8,
+  iconWrap: {
+    marginRight: Spacing.sm,
   },
   text: {
+    color: Colors.white,
+    fontSize: FontSizes.md,
     fontWeight: '700',
-    textAlign: 'center',
+    letterSpacing: 0.3,
   },
-  outlineBorder: {
-    borderWidth: 1.5,
-    borderColor: COLORS.primary,
+  outlineText: {
+    color: Colors.primary,
   },
-  small: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-  },
-  smallText: {
-    fontSize: 13,
-  },
-  medium: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 14,
-  },
-  mediumText: {
-    fontSize: 16,
-  },
-  large: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-  },
-  largeText: {
-    fontSize: 17,
+  dangerText: {
+    color: Colors.white,
   },
 });
+
+export default CustomButton;

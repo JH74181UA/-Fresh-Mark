@@ -1,358 +1,183 @@
+// src/screens/FavoritesScreen.js
 import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  Image,
   TouchableOpacity,
-  SafeAreaView,
+  Image,
+  StatusBar,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SHADOWS } from '../constants/colors';
-import { Header } from '../components/Header';
-import { CustomButton } from '../components/CustomButton';
-import { useFavorites } from '../context/FavoritesContext';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
+import { Colors, FontSizes, Spacing, BorderRadius } from '../theme';
+import { useApp } from '../context/AppContext';
 
-export const FavoritesScreen = ({ navigation }) => {
-  const { favorites, removeFromFavorites, clearFavorites } = useFavorites();
-  const { addToCart, getItemQuantity } = useCart();
-  const { isAdmin, quickSwitchRole } = useAuth();
+const FavoriteItem = ({ item, onRemove, onAddToCart, onPress }) => (
+  <TouchableOpacity style={styles.itemCard} onPress={onPress} activeOpacity={0.85}>
+    <Image source={{ uri: item.image }} style={styles.itemImage} resizeMode="cover" />
+    <View style={styles.itemInfo}>
+      <Text style={styles.itemCategory}>
+        {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+      </Text>
+      <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+      <View style={styles.ratingRow}>
+        <Ionicons name="star" size={11} color={Colors.starActive} />
+        <Text style={styles.rating}>{item.rating}</Text>
+      </View>
+      <View style={styles.priceRow}>
+        <Text style={styles.price}>₹{item.price}</Text>
+        <Text style={styles.unit}>/ {item.unit}</Text>
+      </View>
+    </View>
+    <View style={styles.actions}>
+      <TouchableOpacity style={styles.removeBtn} onPress={onRemove}>
+        <Ionicons name="heart" size={20} color={Colors.error} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.cartBtn, !item.inStock && styles.cartBtnDisabled]}
+        onPress={item.inStock ? onAddToCart : undefined}
+      >
+        <Ionicons name="cart-outline" size={16} color={Colors.white} />
+        <Text style={styles.cartBtnText}>{item.inStock ? 'Add' : 'N/A'}</Text>
+      </TouchableOpacity>
+    </View>
+  </TouchableOpacity>
+);
 
-  const handleAddToCart = (product) => {
-    addToCart(product, 1);
-    Alert.alert('Added to Cart', `${product.name} has been added to your shopping cart.`);
+const FavoritesScreen = ({ navigation }) => {
+  const { favorites, removeFromFavorites, addToCart } = useApp();
+
+  const handleAddToCart = (item) => {
+    addToCart(item, 1);
+    Alert.alert('✅ Added to Cart', `${item.name} added to your cart!`, [
+      { text: 'OK' },
+      { text: 'View Cart', onPress: () => navigation.navigate('Cart') },
+    ]);
   };
 
-  const handleAddAllToCart = () => {
-    if (favorites.length === 0) return;
-    favorites.forEach((item) => {
-      addToCart(item, 1);
-    });
-    Alert.alert('Success', `All ${favorites.length} favorite items added to your cart!`);
+  const handleRemoveFav = (item) => {
+    Alert.alert(
+      'Remove Favorite',
+      `Remove ${item.name} from favorites?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: () => removeFromFavorites(item.id) },
+      ]
+    );
   };
 
-  if (isAdmin) {
+  if (favorites.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <Header title="My Favorites" showMenu={true} showCart={true} />
-        <View style={styles.adminNoticeContainer}>
-          <View style={styles.adminNoticeCard}>
-            <View style={styles.adminIconCircle}>
-              <Ionicons name="heart-dislike" size={40} color={COLORS.danger} />
-            </View>
-            <Text style={styles.adminNoticeTitle}>Customer Favorites Only</Text>
-            <Text style={styles.adminNoticeDesc}>
-              The Wishlist & Favorites collection is reserved for Customer accounts. Admin accounts oversee inventory and store management.
-            </Text>
-            <CustomButton
-              title="Switch to Customer Role"
-              icon="swap-horizontal"
-              onPress={() => quickSwitchRole('customer')}
-              style={{ marginTop: 16, width: '100%' }}
-            />
-          </View>
-        </View>
-      </SafeAreaView>
+      <View style={styles.emptyScreen}>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+        <Text style={styles.emptyEmoji}>💚</Text>
+        <Text style={styles.emptyTitle}>No Favorites Yet</Text>
+        <Text style={styles.emptySubtitle}>
+          Tap the heart icon on any product to save it here for quick access
+        </Text>
+        <TouchableOpacity
+          style={styles.browseBtn}
+          onPress={() => navigation.navigate('Products')}
+        >
+          <Text style={styles.browseBtnText}>Browse Products</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Header
-        title="My Favorites"
-        showMenu={true}
-        showCart={true}
-        rightComponent={
-          favorites.length > 0 ? (
-            <TouchableOpacity onPress={clearFavorites} style={styles.clearHeaderBtn}>
-              <Ionicons name="trash-bin-outline" size={20} color={COLORS.danger} />
-            </TouchableOpacity>
-          ) : null
-        }
-      />
+    <View style={styles.screen}>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
 
-      <View style={styles.container}>
-        {favorites.length > 0 && (
-          <View style={styles.topActionsBar}>
-            <Text style={styles.favoritesCountText}>
-              <Text style={styles.boldText}>{favorites.length}</Text> saved items
-            </Text>
-
-            <TouchableOpacity style={styles.addAllBtn} onPress={handleAddAllToCart}>
-              <Ionicons name="cart-outline" size={16} color={COLORS.primary} />
-              <Text style={styles.addAllText}>Add All to Cart</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <FlatList
-          data={favorites}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => {
-            const inCartCount = getItemQuantity(item.id);
-            return (
-              <View style={[styles.favoriteCard, SHADOWS.soft]}>
-                <TouchableOpacity
-                  style={styles.imageBox}
-                  onPress={() => navigation.navigate('ProductDetails', { productId: item.id })}
-                >
-                  <Image source={{ uri: item.image }} style={styles.productImage} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.infoBox}
-                  onPress={() => navigation.navigate('ProductDetails', { productId: item.id })}
-                >
-                  <Text style={styles.productName} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.productUnit}>{item.unit || item.category}</Text>
-                  <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
-                </TouchableOpacity>
-
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={styles.removeBtn}
-                    onPress={() => removeFromFavorites(item.id)}
-                    accessibilityLabel="Remove from favorites"
-                  >
-                    <Ionicons name="heart-dislike-outline" size={20} color={COLORS.danger} />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.cartBtn, inCartCount > 0 && styles.activeCartBtn]}
-                    onPress={() => handleAddToCart(item)}
-                    accessibilityLabel="Add to cart"
-                  >
-                    <Ionicons
-                      name="cart"
-                      size={16}
-                      color={inCartCount > 0 ? COLORS.white : COLORS.primary}
-                    />
-                    <Text
-                      style={[
-                        styles.cartBtnText,
-                        inCartCount > 0 && styles.activeCartBtnText,
-                      ]}
-                    >
-                      {inCartCount > 0 ? `In Cart (${inCartCount})` : 'Add'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          }}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyHeartBox}>
-                <Ionicons name="heart-outline" size={56} color={COLORS.danger} />
-              </View>
-              <Text style={styles.emptyTitle}>Your Wishlist is Empty</Text>
-              <Text style={styles.emptySub}>
-                Explore our daily fresh groceries and tap the heart icon on any item to save it for later.
-              </Text>
-              <CustomButton
-                title="Browse Daily Groceries"
-                icon="basket-outline"
-                onPress={() => navigation.navigate('ProductsTab')}
-                style={{ marginTop: 24, width: '80%' }}
-              />
-            </View>
-          }
-        />
+      <View style={styles.topBar}>
+        <Text style={styles.count}>{favorites.length} saved items</Text>
       </View>
-    </SafeAreaView>
+
+      <FlatList
+        data={favorites}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <FavoriteItem
+            item={item}
+            onRemove={() => handleRemoveFav(item)}
+            onAddToCart={() => handleAddToCart(item)}
+            onPress={() => navigation.navigate('ProductDetails', { product: item })}
+          />
+        )}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screen: { flex: 1, backgroundColor: Colors.background },
+  emptyScreen: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xxxl,
   },
-  container: {
-    flex: 1,
+  emptyEmoji: { fontSize: 70, marginBottom: Spacing.xl },
+  emptyTitle: { color: Colors.white, fontSize: FontSizes.xxl, fontWeight: '700', marginBottom: Spacing.sm },
+  emptySubtitle: {
+    color: Colors.textSecondary,
+    fontSize: FontSizes.md,
+    textAlign: 'center',
+    marginBottom: Spacing.xxxl,
+    lineHeight: 22,
   },
-  clearHeaderBtn: {
-    padding: 6,
+  browseBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.xxxl,
+    paddingVertical: Spacing.md,
   },
-  topActionsBar: {
+  browseBtnText: { color: Colors.white, fontSize: FontSizes.md, fontWeight: '700' },
+  topBar: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md },
+  count: { color: Colors.textSecondary, fontSize: FontSizes.sm },
+  listContent: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
+  itemCard: {
     flexDirection: 'row',
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  itemImage: { width: 90, height: 110, backgroundColor: '#222' },
+  itemInfo: { flex: 1, padding: Spacing.md },
+  itemCategory: { color: Colors.primary, fontSize: FontSizes.xs, fontWeight: '700', textTransform: 'uppercase' },
+  itemName: { color: Colors.white, fontSize: FontSizes.sm, fontWeight: '600', marginBottom: 4, lineHeight: 18 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 },
+  rating: { color: Colors.starActive, fontSize: FontSizes.xs, fontWeight: '600' },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  price: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '700' },
+  unit: { color: Colors.textSecondary, fontSize: FontSizes.xs },
+  actions: {
+    padding: Spacing.sm,
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
-  },
-  favoritesCountText: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-  },
-  boldText: {
-    fontWeight: '700',
-    color: COLORS.textDark,
-  },
-  addAllBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  addAllText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  listContent: {
-    padding: 16,
-  },
-  favoriteCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  imageBox: {
-    width: 68,
-    height: 68,
-    borderRadius: 12,
-    backgroundColor: COLORS.surfaceVariant,
-    overflow: 'hidden',
-  },
-  productImage: {
-    width: '100%',
-    height: '100%',
-  },
-  infoBox: {
-    flex: 1,
-    marginLeft: 12,
-    marginRight: 8,
-  },
-  productName: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textDark,
-  },
-  productUnit: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  productPrice: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: COLORS.primary,
-    marginTop: 4,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   removeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: COLORS.dangerLight,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: Spacing.sm,
   },
   cartBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    gap: 3,
   },
-  activeCartBtn: {
-    backgroundColor: COLORS.primary,
-  },
-  cartBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  activeCartBtnText: {
-    color: COLORS.white,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 24,
-  },
-  emptyHeartBox: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: COLORS.dangerLight + '40',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 19,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  emptySub: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 18,
-  },
-  adminNoticeContainer: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  adminNoticeCard: {
-    backgroundColor: COLORS.surface,
-    padding: 24,
-    borderRadius: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    width: '100%',
-  },
-  adminIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.dangerLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  adminNoticeTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.textDark,
-    marginBottom: 8,
-  },
-  adminNoticeDesc: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
+  cartBtnDisabled: { backgroundColor: Colors.border },
+  cartBtnText: { color: Colors.white, fontSize: FontSizes.xs, fontWeight: '700' },
 });
+
+export default FavoritesScreen;

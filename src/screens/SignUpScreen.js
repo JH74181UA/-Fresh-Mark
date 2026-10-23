@@ -1,345 +1,218 @@
+// src/screens/SignUpScreen.js
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
+  StatusBar,
+  Alert,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../constants/colors';
-import { Header } from '../components/Header';
-import { CustomInput } from '../components/CustomInput';
-import { CustomButton } from '../components/CustomButton';
-import { useAuth } from '../context/AuthContext';
+import { Colors, FontSizes, Spacing, BorderRadius } from '../theme';
+import { useApp } from '../context/AppContext';
+import CustomInput from '../components/CustomInput';
+import CustomButton from '../components/CustomButton';
 
-export const SignUpScreen = ({ navigation }) => {
-  const { signUp } = useAuth();
+const SignUpScreen = ({ navigation }) => {
+  const { signUp } = useApp();
 
-  const [role, setRole] = useState('customer'); // 'customer' or 'admin'
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [address, setAddress] = useState('');
-
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
+  const update = (field) => (val) => setForm((f) => ({ ...f, [field]: val }));
+
   const validate = () => {
-    const errs = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const cleanedPhone = phone.replace(/[^0-9]/g, '');
+    const e = {};
+    if (!form.name.trim()) e.name = 'Full name is required';
+    else if (form.name.trim().length < 2) e.name = 'Name must be at least 2 characters';
 
-    if (!name.trim()) {
-      errs.name = 'Full name is required';
-    } else if (name.trim().length < 3) {
-      errs.name = 'Name must be at least 3 characters';
-    }
+    if (!form.email.trim()) e.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Enter a valid email address';
 
-    if (!email.trim()) {
-      errs.email = 'Email address is required';
-    } else if (!emailRegex.test(email.trim())) {
-      errs.email = 'Please enter a valid email address';
-    }
+    if (!form.phone.trim()) e.phone = 'Phone number is required';
+    else if (!/^[0-9]{10}$/.test(form.phone.trim())) e.phone = 'Enter a valid 10-digit phone number';
 
-    if (!phone.trim()) {
-      errs.phone = 'Phone number is required';
-    } else if (cleanedPhone.length < 10) {
-      errs.phone = 'Phone number must have at least 10 digits';
-    }
+    if (!form.address.trim()) e.address = 'Address is required';
 
-    if (!password) {
-      errs.password = 'Password is required';
-    } else if (password.length < 6) {
-      errs.password = 'Password must be at least 6 characters';
-    }
+    if (!form.password) e.password = 'Password is required';
+    else if (form.password.length < 6) e.password = 'Password must be at least 6 characters';
+    else if (!/(?=.*[A-Z])/.test(form.password)) e.password = 'Password must contain at least one uppercase letter';
 
-    if (password !== confirmPassword) {
-      errs.confirmPassword = 'Passwords do not match';
-    }
+    if (!form.confirmPassword) e.confirmPassword = 'Please confirm your password';
+    else if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match';
 
-    if (!address.trim()) {
-      errs.address = 'Delivery address is required';
-    }
-
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
-  const handleSignUp = () => {
-    if (!validate()) {
-      Alert.alert('Incomplete Form', 'Please complete all required fields correctly.');
-      return;
-    }
-
+  const handleSignUp = async () => {
+    if (!validate()) return;
     setLoading(true);
     setTimeout(() => {
-      const res = signUp({
-        name: name.trim(),
-        email: email.trim(),
-        password,
-        phone: phone.trim(),
-        address: address.trim(),
-        role,
+      const result = signUp({
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        address: form.address.trim(),
+        password: form.password,
+        role: 'customer',
       });
-
       setLoading(false);
-      if (res.success) {
-        Alert.alert('Account Created', res.message, [
-          { text: 'Start Shopping', onPress: () => navigation.navigate('MainDrawer') },
+      if (result.success) {
+        Alert.alert('Success! 🎉', result.message, [
+          { text: 'Sign In Now', onPress: () => navigation.navigate('SignIn', { role: 'customer' }) },
         ]);
       } else {
-        Alert.alert('Registration Error', res.message);
+        Alert.alert('Registration Failed', result.message);
       }
-    }, 600);
+    }, 800);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Header title="Create Account" showBack={true} showCart={false} showMenu={false} />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Header Description */}
-          <View style={styles.headerBox}>
-            <Text style={styles.title}>Join FreshMart</Text>
-            <Text style={styles.subtitle}>
-              Sign up today for daily fresh grocery deliveries right at your doorstep.
-            </Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.iconCircle}>
+            <Ionicons name="person-add" size={32} color={Colors.white} />
           </View>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Join FreshMart and shop fresh groceries daily</Text>
+        </View>
 
-          {/* Role Selection */}
-          <View style={styles.roleSelectionBox}>
-            <Text style={styles.roleSelectionLabel}>Select Account Role:</Text>
-            <View style={styles.roleTabs}>
-              <TouchableOpacity
-                style={[styles.roleTab, role === 'customer' && styles.activeCustomerTab]}
-                onPress={() => setRole('customer')}
-              >
-                <Ionicons
-                  name="person"
-                  size={16}
-                  color={role === 'customer' ? COLORS.white : COLORS.textDark}
-                />
-                <Text
-                  style={[styles.roleTabText, role === 'customer' && styles.activeRoleTabText]}
-                >
-                  Customer
-                </Text>
-              </TouchableOpacity>
+        {/* Form */}
+        <View style={styles.form}>
+          <CustomInput
+            label="Full Name"
+            value={form.name}
+            onChangeText={update('name')}
+            placeholder="Enter your full name"
+            leftIcon="person-outline"
+            error={errors.name}
+            autoCapitalize="words"
+          />
+          <CustomInput
+            label="Email Address"
+            value={form.email}
+            onChangeText={update('email')}
+            placeholder="Enter your email"
+            keyboardType="email-address"
+            leftIcon="mail-outline"
+            error={errors.email}
+          />
+          <CustomInput
+            label="Phone Number"
+            value={form.phone}
+            onChangeText={update('phone')}
+            placeholder="Enter 10-digit phone number"
+            keyboardType="phone-pad"
+            leftIcon="call-outline"
+            error={errors.phone}
+          />
+          <CustomInput
+            label="Address"
+            value={form.address}
+            onChangeText={update('address')}
+            placeholder="Enter your delivery address"
+            leftIcon="location-outline"
+            error={errors.address}
+            multiline
+            numberOfLines={3}
+            autoCapitalize="sentences"
+          />
+          <CustomInput
+            label="Password"
+            value={form.password}
+            onChangeText={update('password')}
+            placeholder="Min. 6 chars with uppercase"
+            secureTextEntry
+            leftIcon="lock-closed-outline"
+            error={errors.password}
+          />
+          <CustomInput
+            label="Confirm Password"
+            value={form.confirmPassword}
+            onChangeText={update('confirmPassword')}
+            placeholder="Re-enter your password"
+            secureTextEntry
+            leftIcon="shield-outline"
+            error={errors.confirmPassword}
+          />
 
-              <TouchableOpacity
-                style={[styles.roleTab, role === 'admin' && styles.activeAdminTab]}
-                onPress={() => setRole('admin')}
-              >
-                <Ionicons
-                  name="shield-checkmark"
-                  size={16}
-                  color={role === 'admin' ? COLORS.white : COLORS.textDark}
-                />
-                <Text
-                  style={[styles.roleTabText, role === 'admin' && styles.activeRoleTabText]}
-                >
-                  Admin
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <CustomButton
+            title="Create Account"
+            onPress={handleSignUp}
+            loading={loading}
+            style={{ marginTop: Spacing.sm }}
+          />
 
-          {/* Sign Up Form Fields */}
-          <View style={styles.formContainer}>
-            <CustomInput
-              label="Full Name *"
-              placeholder="e.g. Rahul Sharma"
-              value={name}
-              onChangeText={(text) => {
-                setName(text);
-                if (errors.name) setErrors({ ...errors, name: null });
-              }}
-              error={errors.name}
-              icon="person-outline"
-            />
-
-            <CustomInput
-              label="Email Address *"
-              placeholder="e.g. rahul@example.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                if (errors.email) setErrors({ ...errors, email: null });
-              }}
-              error={errors.email}
-              icon="mail-outline"
-            />
-
-            <CustomInput
-              label="Mobile Phone *"
-              placeholder="e.g. +91 98765 43210"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={(text) => {
-                setPhone(text);
-                if (errors.phone) setErrors({ ...errors, phone: null });
-              }}
-              error={errors.phone}
-              icon="call-outline"
-            />
-
-            <CustomInput
-              label="Password *"
-              placeholder="Minimum 6 characters"
-              secureTextEntry={true}
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (errors.password) setErrors({ ...errors, password: null });
-              }}
-              error={errors.password}
-              icon="lock-closed-outline"
-            />
-
-            <CustomInput
-              label="Confirm Password *"
-              placeholder="Re-enter your password"
-              secureTextEntry={true}
-              value={confirmPassword}
-              onChangeText={(text) => {
-                setConfirmPassword(text);
-                if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: null });
-              }}
-              error={errors.confirmPassword}
-              icon="checkmark-done-outline"
-            />
-
-            <CustomInput
-              label="Delivery Address *"
-              placeholder="House/Flat No, Street, City, Pincode"
-              multiline={true}
-              numberOfLines={2}
-              value={address}
-              onChangeText={(text) => {
-                setAddress(text);
-                if (errors.address) setErrors({ ...errors, address: null });
-              }}
-              error={errors.address}
-              icon="location-outline"
-            />
-
-            <CustomButton
-              title={`Register as ${role === 'admin' ? 'Admin' : 'Customer'}`}
-              loading={loading}
-              onPress={handleSignUp}
-              style={{ marginTop: 10 }}
-            />
-          </View>
-
-          {/* Already have an account */}
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Already have an account?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
-              <Text style={styles.footerLink}> Sign In here</Text>
+          <View style={styles.signInRow}>
+            <Text style={styles.signInText}>Already have an account? </Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('SignIn', { role: 'customer' })}
+            >
+              <Text style={styles.signInLink}>Sign In</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: COLORS.background,
+  screen: { flex: 1, backgroundColor: Colors.background },
+  scroll: { flexGrow: 1, paddingBottom: Spacing.xxxl },
+  header: {
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingBottom: Spacing.xxxl,
+    backgroundColor: '#080808',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
   },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  headerBox: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  roleSelectionBox: {
-    marginBottom: 16,
-  },
-  roleSelectionLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.textDark,
-    marginBottom: 8,
-  },
-  roleTabs: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surfaceVariant,
-    borderRadius: 14,
-    padding: 4,
-  },
-  roleTab: {
-    flex: 1,
-    flexDirection: 'row',
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 10,
-    gap: 6,
+    marginBottom: Spacing.md,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  activeCustomerTab: {
-    backgroundColor: COLORS.primary,
-  },
-  activeAdminTab: {
-    backgroundColor: COLORS.adminBadge,
-  },
-  roleTabText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.textDark,
-  },
-  activeRoleTabText: {
-    color: COLORS.white,
-  },
-  formContainer: {
-    backgroundColor: COLORS.surface,
-    padding: 20,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  footerText: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-  },
-  footerLink: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
+  title: { color: Colors.white, fontSize: FontSizes.xxl, fontWeight: '800', marginBottom: Spacing.sm },
+  subtitle: { color: Colors.textSecondary, fontSize: FontSizes.md, textAlign: 'center' },
+  form: { paddingHorizontal: Spacing.xl },
+  signInRow: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.lg },
+  signInText: { color: Colors.textSecondary, fontSize: FontSizes.sm },
+  signInLink: { color: Colors.primary, fontSize: FontSizes.sm, fontWeight: '700' },
 });
+
+export default SignUpScreen;

@@ -1,77 +1,74 @@
+// src/components/CustomInput.js
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../constants/colors';
+import { Colors, FontSizes, Spacing, BorderRadius } from '../theme';
 
-export const CustomInput = ({
+const CustomInput = ({
   label,
   value,
   onChangeText,
   placeholder,
-  icon,
-  error,
-  secureTextEntry = false,
+  secureTextEntry,
   keyboardType = 'default',
-  autoCapitalize = 'none',
+  error,
+  leftIcon,
+  multiline,
+  numberOfLines,
   editable = true,
-  multiline = false,
-  numberOfLines = 1,
+  autoCapitalize = 'none',
   style,
 }) => {
-  const [isSecure, setIsSecure] = useState(secureTextEntry);
-  const [isFocused, setIsFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   return (
     <View style={[styles.container, style]}>
       {label && <Text style={styles.label}>{label}</Text>}
-      
       <View
         style={[
-          styles.inputContainer,
-          isFocused && styles.focusedBorder,
-          error ? styles.errorBorder : null,
-          !editable && styles.disabledInput,
+          styles.inputWrapper,
+          focused && styles.inputFocused,
+          error && styles.inputError,
+          !editable && styles.inputDisabled,
         ]}
       >
-        {icon && (
+        {leftIcon && (
           <Ionicons
-            name={icon}
-            size={20}
-            color={error ? COLORS.danger : isFocused ? COLORS.primary : COLORS.textMuted}
-            style={styles.icon}
+            name={leftIcon}
+            size={18}
+            color={focused ? Colors.primary : Colors.placeholder}
+            style={styles.leftIcon}
           />
         )}
-
         <TextInput
+          style={[styles.input, multiline && styles.multiline]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={COLORS.textLight}
-          secureTextEntry={isSecure}
+          placeholderTextColor={Colors.placeholder}
+          secureTextEntry={secureTextEntry && !showPassword}
           keyboardType={keyboardType}
-          autoCapitalize={autoCapitalize}
           editable={editable}
+          autoCapitalize={autoCapitalize}
           multiline={multiline}
           numberOfLines={numberOfLines}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          style={[styles.input, multiline && styles.multilineInput]}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
         />
-
         {secureTextEntry && (
           <TouchableOpacity
-            onPress={() => setIsSecure(!isSecure)}
-            style={styles.eyeIcon}
+            onPress={() => setShowPassword((v) => !v)}
+            style={styles.eyeBtn}
           >
             <Ionicons
-              name={isSecure ? 'eye-off-outline' : 'eye-outline'}
-              size={20}
-              color={COLORS.textMuted}
+              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+              size={18}
+              color={Colors.placeholder}
             />
           </TouchableOpacity>
         )}
       </View>
-
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
@@ -79,55 +76,54 @@ export const CustomInput = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   label: {
-    fontSize: 14,
+    color: Colors.white,
+    fontSize: FontSizes.sm,
     fontWeight: '600',
-    color: COLORS.textDark,
     marginBottom: 6,
   },
-  inputContainer: {
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surfaceVariant,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-    paddingHorizontal: 14,
+    backgroundColor: Colors.inputBg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
   },
-  focusedBorder: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.white,
+  inputFocused: {
+    borderColor: Colors.primary,
   },
-  errorBorder: {
-    borderColor: COLORS.danger,
-    backgroundColor: COLORS.dangerLight + '20',
+  inputError: {
+    borderColor: Colors.error,
   },
-  disabledInput: {
+  inputDisabled: {
     opacity: 0.6,
   },
-  icon: {
-    marginRight: 10,
+  leftIcon: {
+    marginRight: Spacing.sm,
   },
   input: {
     flex: 1,
-    height: 48,
-    fontSize: 15,
-    color: COLORS.textDark,
+    color: Colors.white,
+    fontSize: FontSizes.md,
+    paddingVertical: Spacing.md,
   },
-  multilineInput: {
-    height: 80,
+  multiline: {
     textAlignVertical: 'top',
-    paddingTop: 10,
+    paddingTop: Spacing.md,
+    height: 100,
   },
-  eyeIcon: {
-    padding: 6,
+  eyeBtn: {
+    padding: Spacing.xs,
   },
   errorText: {
-    color: COLORS.danger,
-    fontSize: 12,
+    color: Colors.error,
+    fontSize: FontSizes.xs,
     marginTop: 4,
-    marginLeft: 4,
   },
 });
+
+export default CustomInput;

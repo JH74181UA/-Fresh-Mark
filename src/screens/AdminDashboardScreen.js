@@ -1,316 +1,247 @@
+// src/screens/AdminDashboardScreen.js
 import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
-  Switch,
-  Image,
+  StatusBar,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SHADOWS } from '../constants/colors';
-import { Header } from '../components/Header';
-import { CustomButton } from '../components/CustomButton';
-import { useProducts } from '../context/ProductsContext';
-import { useAuth } from '../context/AuthContext';
+import { Colors, FontSizes, Spacing, BorderRadius } from '../theme';
+import { useApp } from '../context/AppContext';
+import { PRODUCTS, CATEGORIES } from '../data/products';
 
-export const AdminDashboardScreen = ({ navigation }) => {
-  const { products, toggleStockStatus } = useProducts();
-  const { user, quickSwitchRole } = useAuth();
+const StatCard = ({ icon, value, label, color }) => (
+  <View style={[styles.statCard, { borderLeftColor: color || Colors.primary }]}>
+    <Ionicons name={icon} size={24} color={color || Colors.primary} />
+    <Text style={[styles.statValue, { color: color || Colors.primary }]}>{value}</Text>
+    <Text style={styles.statLabel}>{label}</Text>
+  </View>
+);
 
-  const totalProducts = products.length;
-  const inStockCount = products.filter((p) => p.inStock).length;
-  const outOfStockCount = totalProducts - inStockCount;
+const AdminDashboardScreen = ({ navigation }) => {
+  const { user, signOut } = useApp();
+
+  const totalProducts = PRODUCTS.length;
+  const inStockProducts = PRODUCTS.filter((p) => p.inStock).length;
+  const outOfStock = totalProducts - inStockProducts;
+  const categories = CATEGORIES.length - 1; // exclude 'all'
+
+  const handleLogout = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: signOut },
+    ]);
+  };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Header title="Admin Dashboard" showMenu={true} showCart={false} />
+    <ScrollView style={styles.screen} showsVerticalScrollIndicator={false}>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Admin Welcome Banner */}
-        <View style={[styles.adminBanner, SHADOWS.soft]}>
-          <View style={styles.bannerRow}>
-            <View style={styles.adminIconBox}>
-              <Ionicons name="shield-checkmark" size={28} color={COLORS.adminBadge} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.adminGreeting}>Administrator Console</Text>
-              <Text style={styles.adminSub}>{user?.email || 'admin@freshmart.com'}</Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-            <View style={styles.roleChip}>
-              <Text style={styles.roleChipText}>Store Manager Privileges</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.superAdminProfileBtn}
-              onPress={() => navigation.navigate('SuperAdminProfile')}
-            >
-              <Ionicons name="ribbon" size={14} color={COLORS.superAdminBadge} />
-              <Text style={styles.superAdminProfileBtnText}>Super Admin Profile</Text>
-            </TouchableOpacity>
-          </View>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.adminAvatar}>
+          <Ionicons name="shield-checkmark" size={36} color={Colors.white} />
         </View>
-
-        {/* Metrics Grid */}
-        <View style={styles.metricsGrid}>
-          <View style={[styles.metricCard, SHADOWS.soft]}>
-            <View style={[styles.metricIconCircle, { backgroundColor: COLORS.primaryLight }]}>
-              <Ionicons name="cube-outline" size={20} color={COLORS.primary} />
-            </View>
-            <Text style={styles.metricNumber}>{totalProducts}</Text>
-            <Text style={styles.metricLabel}>Total Products</Text>
-          </View>
-
-          <View style={[styles.metricCard, SHADOWS.soft]}>
-            <View style={[styles.metricIconCircle, { backgroundColor: COLORS.customerBadgeLight }]}>
-              <Ionicons name="checkmark-done-circle-outline" size={20} color={COLORS.customerBadge} />
-            </View>
-            <Text style={styles.metricNumber}>{inStockCount}</Text>
-            <Text style={styles.metricLabel}>In Stock</Text>
-          </View>
-
-          <View style={[styles.metricCard, SHADOWS.soft]}>
-            <View style={[styles.metricIconCircle, { backgroundColor: COLORS.dangerLight }]}>
-              <Ionicons name="close-circle-outline" size={20} color={COLORS.danger} />
-            </View>
-            <Text style={styles.metricNumber}>{outOfStockCount}</Text>
-            <Text style={styles.metricLabel}>Out of Stock</Text>
-          </View>
-
-          <View style={[styles.metricCard, SHADOWS.soft]}>
-            <View style={[styles.metricIconCircle, { backgroundColor: COLORS.secondaryLight }]}>
-              <Ionicons name="wallet-outline" size={20} color={COLORS.secondary} />
-            </View>
-            <Text style={styles.metricNumber}>$1,842</Text>
-            <Text style={styles.metricLabel}>Today's Revenue</Text>
-          </View>
+        <Text style={styles.welcomeText}>Welcome back,</Text>
+        <Text style={styles.adminName}>{user?.name}</Text>
+        <Text style={styles.adminEmail}>{user?.email}</Text>
+        <View style={styles.adminBadge}>
+          <Text style={styles.adminBadgeText}>🔐 Admin Panel</Text>
         </View>
+      </View>
 
-        {/* Quick Actions */}
-        <View style={styles.quickActionsCard}>
-          <Text style={styles.sectionTitle}>Inventory Stock Management</Text>
-          <Text style={styles.sectionSubtitle}>
-            Toggle the switch next to any product to instantly mark it In-Stock or Out-of-Stock across the customer app.
-          </Text>
+      {/* Stats */}
+      <View style={styles.statsSection}>
+        <Text style={styles.sectionTitle}>Store Overview</Text>
+        <View style={styles.statsGrid}>
+          <StatCard icon="cube-outline" value={totalProducts} label="Total Products" color={Colors.primary} />
+          <StatCard icon="checkmark-circle-outline" value={inStockProducts} label="In Stock" color="#27AE60" />
+          <StatCard icon="close-circle-outline" value={outOfStock} label="Out of Stock" color={Colors.error} />
+          <StatCard icon="grid-outline" value={categories} label="Categories" color="#9B59B6" />
+        </View>
+      </View>
 
-          <View style={styles.inventoryList}>
-            {products.map((item) => (
-              <View key={item.id} style={styles.inventoryItem}>
-                <Image source={{ uri: item.image }} style={styles.thumbImage} />
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.itemPrice}>
-                    ${item.price.toFixed(2)} • {item.unit}
-                  </Text>
-                </View>
+      {/* Quick Actions */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => navigation.navigate('Products')}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: Colors.primary + '20' }]}>
+            <Ionicons name="cube-outline" size={22} color={Colors.primary} />
+          </View>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionLabel}>View All Products</Text>
+            <Text style={styles.actionSub}>{totalProducts} products in catalog</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
 
-                <View style={styles.stockStatusContainer}>
-                  <Text
-                    style={[
-                      styles.stockLabel,
-                      item.inStock ? styles.inStockLabel : styles.outStockLabel,
-                    ]}
-                  >
-                    {item.inStock ? 'In Stock' : 'Out'}
-                  </Text>
-                  <Switch
-                    value={item.inStock}
-                    onValueChange={() => toggleStockStatus(item.id)}
-                    trackColor={{ false: COLORS.dangerLight, true: COLORS.primaryLight }}
-                    thumbColor={item.inStock ? COLORS.primary : COLORS.danger}
-                  />
-                </View>
+      {/* Categories */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Product Categories</Text>
+        {CATEGORIES.filter((c) => c.id !== 'all').map((cat) => {
+          const count = PRODUCTS.filter((p) => p.category === cat.id).length;
+          return (
+            <View key={cat.id} style={styles.catRow}>
+              <Text style={styles.catIcon}>{cat.icon}</Text>
+              <Text style={styles.catName}>{cat.name}</Text>
+              <View style={styles.catBadge}>
+                <Text style={styles.catCount}>{count}</Text>
               </View>
-            ))}
-          </View>
-        </View>
+            </View>
+          );
+        })}
+      </View>
 
-        {/* Switch Role Button */}
-        <View style={styles.roleSwitchSection}>
-          <CustomButton
-            title="Switch Back to Customer View"
-            icon="swap-horizontal"
-            type="outline"
-            onPress={() => quickSwitchRole('customer')}
-          />
+      {/* Admin Info */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Admin Account</Text>
+        <View style={styles.infoRow}>
+          <Ionicons name="person-outline" size={16} color={Colors.textSecondary} />
+          <Text style={styles.infoLabel}>Name:</Text>
+          <Text style={styles.infoValue}>{user?.name}</Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+        <View style={styles.infoRow}>
+          <Ionicons name="mail-outline" size={16} color={Colors.textSecondary} />
+          <Text style={styles.infoLabel}>Email:</Text>
+          <Text style={styles.infoValue}>{user?.email}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Ionicons name="call-outline" size={16} color={Colors.textSecondary} />
+          <Text style={styles.infoLabel}>Phone:</Text>
+          <Text style={styles.infoValue}>{user?.phone || 'Not set'}</Text>
+        </View>
+      </View>
+
+      {/* Logout */}
+      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <Ionicons name="log-out-outline" size={20} color={Colors.error} />
+        <Text style={styles.logoutText}>Sign Out</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screen: { flex: 1, backgroundColor: Colors.background },
+  header: {
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingBottom: Spacing.xxxl,
+    backgroundColor: '#0A0A0A',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: Spacing.xl,
+  },
+  adminAvatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#E67E22',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.md,
+    shadowColor: '#E67E22',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  welcomeText: { color: Colors.textSecondary, fontSize: FontSizes.md },
+  adminName: { color: Colors.white, fontSize: FontSizes.xxl, fontWeight: '800', marginBottom: 4 },
+  adminEmail: { color: Colors.textSecondary, fontSize: FontSizes.sm, marginBottom: Spacing.md },
+  adminBadge: {
+    backgroundColor: '#E67E2220',
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+    borderWidth: 1,
+    borderColor: '#E67E2250',
+  },
+  adminBadgeText: { color: '#E67E22', fontSize: FontSizes.sm, fontWeight: '700' },
+  statsSection: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.xl },
+  sectionTitle: { color: Colors.white, fontSize: FontSizes.lg, fontWeight: '700', marginBottom: Spacing.md },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  statCard: {
     flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  adminBanner: {
-    backgroundColor: COLORS.surface,
-    padding: 18,
-    borderRadius: 20,
+    minWidth: '45%',
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderLeftWidth: 3,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 16,
+    borderColor: Colors.border,
+    gap: 4,
   },
-  bannerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  adminIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: COLORS.adminBadgeLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  adminGreeting: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  adminSub: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  roleChip: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.adminBadgeLight,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  roleChipText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.adminBadge,
-  },
-  superAdminProfileBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: COLORS.superAdminBadgeLight,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  superAdminProfileBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.superAdminBadge,
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 20,
-  },
-  metricCard: {
-    width: '48%',
-    backgroundColor: COLORS.surface,
-    padding: 16,
-    borderRadius: 18,
+  statValue: { fontSize: FontSizes.xxl, fontWeight: '800' },
+  statLabel: { color: Colors.textSecondary, fontSize: FontSizes.xs, fontWeight: '600' },
+  section: {
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: Colors.border,
   },
-  metricIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  metricNumber: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  metricLabel: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  quickActionsCard: {
-    backgroundColor: COLORS.surface,
-    padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 4,
-    marginBottom: 16,
-    lineHeight: 16,
-  },
-  inventoryList: {
-    gap: 10,
-  },
-  inventoryItem: {
+  actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    gap: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  actionIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  actionContent: { flex: 1 },
+  actionLabel: { color: Colors.white, fontSize: FontSizes.md, fontWeight: '600' },
+  actionSub: { color: Colors.textSecondary, fontSize: FontSizes.xs },
+  catRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+    borderBottomColor: Colors.border,
+    gap: Spacing.md,
   },
-  thumbImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    backgroundColor: COLORS.surfaceVariant,
+  catIcon: { fontSize: 20 },
+  catName: { flex: 1, color: Colors.white, fontSize: FontSizes.md, fontWeight: '500' },
+  catBadge: {
+    backgroundColor: Colors.primary + '20',
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
-  itemInfo: {
-    flex: 1,
-    marginLeft: 12,
-    marginRight: 8,
-  },
-  itemName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.textDark,
-  },
-  itemPrice: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  stockStatusContainer: {
+  catCount: { color: Colors.primary, fontSize: FontSizes.sm, fontWeight: '700' },
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  stockLabel: {
-    fontSize: 11,
-    fontWeight: '700',
+  infoLabel: { color: Colors.textSecondary, fontSize: FontSizes.sm },
+  infoValue: { flex: 1, color: Colors.white, fontSize: FontSizes.sm, fontWeight: '500' },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.error + '15',
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.error + '30',
+    marginBottom: 100,
   },
-  inStockLabel: {
-    color: COLORS.customerBadge,
-  },
-  outStockLabel: {
-    color: COLORS.danger,
-  },
-  roleSwitchSection: {
-    marginTop: 20,
-  },
+  logoutText: { color: Colors.error, fontSize: FontSizes.md, fontWeight: '700' },
 });
+
+export default AdminDashboardScreen;

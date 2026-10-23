@@ -1,221 +1,201 @@
+// src/screens/EditProfileScreen.js
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   Alert,
+  StatusBar,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { COLORS } from '../constants/colors';
-import { Header } from '../components/Header';
-import { CustomInput } from '../components/CustomInput';
-import { CustomButton } from '../components/CustomButton';
-import { useAuth } from '../context/AuthContext';
+import { Colors, FontSizes, Spacing, BorderRadius } from '../theme';
+import { useApp } from '../context/AppContext';
+import CustomInput from '../components/CustomInput';
+import CustomButton from '../components/CustomButton';
 
-export const EditProfileScreen = ({ navigation }) => {
-  const { user, updateProfile } = useAuth();
+const EditProfileScreen = ({ navigation }) => {
+  const { user, updateProfile } = useApp();
 
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phone || '');
-  const [address, setAddress] = useState(user?.address || '');
-
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    address: user?.address || '',
+  });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const update = (field) => (val) => {
+    setForm((f) => ({ ...f, [field]: val }));
+    if (errors[field]) setErrors((e) => ({ ...e, [field]: undefined }));
+  };
 
   const validate = () => {
-    const newErrors = {};
+    const e = {};
+    if (!form.name.trim()) e.name = 'Name is required';
+    else if (form.name.trim().length < 2) e.name = 'Name must be at least 2 characters';
 
-    if (!name.trim()) {
-      newErrors.name = 'Full name is required';
-    } else if (name.trim().length < 3) {
-      newErrors.name = 'Name must be at least 3 characters';
-    }
+    if (!form.email.trim()) e.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Enter a valid email address';
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
-      newErrors.email = 'Email address is required';
-    } else if (!emailRegex.test(email.trim())) {
-      newErrors.email = 'Please enter a valid email address';
-    }
+    if (form.phone && !/^[0-9]{10}$/.test(form.phone.trim()))
+      e.phone = 'Enter a valid 10-digit phone number';
 
-    const cleanedPhone = phone.replace(/[^0-9]/g, '');
-    if (!phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (cleanedPhone.length < 10) {
-      newErrors.phone = 'Phone number must contain at least 10 digits';
-    }
+    if (!form.address.trim()) e.address = 'Address is required';
 
-    if (!address.trim()) {
-      newErrors.address = 'Delivery address is required';
-    } else if (address.trim().length < 10) {
-      newErrors.address = 'Please provide a complete delivery address';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleSave = () => {
-    if (!validate()) {
-      Alert.alert('Validation Error', 'Please correct the highlighted fields before saving.');
-      return;
-    }
-
+    if (!validate()) return;
     setLoading(true);
-
     setTimeout(() => {
       updateProfile({
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        address: address.trim(),
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        address: form.address.trim(),
       });
-
       setLoading(false);
-      Alert.alert('Success', 'Profile information updated successfully!', [
+      setSuccess(true);
+      Alert.alert('✅ Profile Updated', 'Your profile has been updated successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    }, 600);
+    }, 800);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Header title="Edit Profile" showBack={true} showCart={false} />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <View style={styles.headerInfo}>
-            <Text style={styles.pageTitle}>Update Personal Info</Text>
-            <Text style={styles.pageSubtitle}>
-              Keep your contact details up-to-date for smooth grocery delivery.
+        {/* Avatar */}
+        <View style={styles.header}>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarText}>
+              {(form.name || user?.name)?.charAt(0)?.toUpperCase() || '?'}
             </Text>
           </View>
+          <Text style={styles.title}>Edit Profile</Text>
+          <Text style={styles.subtitle}>Update your account information</Text>
+        </View>
 
-          <View style={styles.formCard}>
-            <CustomInput
-              label="Full Name *"
-              placeholder="e.g. Alex Johnson"
-              value={name}
-              onChangeText={(text) => {
-                setName(text);
-                if (errors.name) setErrors({ ...errors, name: null });
-              }}
-              error={errors.name}
-              icon="person-outline"
-            />
+        <View style={styles.form}>
+          <CustomInput
+            label="Full Name"
+            value={form.name}
+            onChangeText={update('name')}
+            placeholder="Enter your full name"
+            leftIcon="person-outline"
+            error={errors.name}
+            autoCapitalize="words"
+          />
+          <CustomInput
+            label="Email Address"
+            value={form.email}
+            onChangeText={update('email')}
+            placeholder="Enter your email"
+            keyboardType="email-address"
+            leftIcon="mail-outline"
+            error={errors.email}
+            editable={false}
+          />
+          <Text style={styles.emailNote}>⚠️ Email cannot be changed</Text>
+          <CustomInput
+            label="Phone Number"
+            value={form.phone}
+            onChangeText={update('phone')}
+            placeholder="Enter 10-digit phone number"
+            keyboardType="phone-pad"
+            leftIcon="call-outline"
+            error={errors.phone}
+          />
+          <CustomInput
+            label="Delivery Address"
+            value={form.address}
+            onChangeText={update('address')}
+            placeholder="Enter your full address"
+            leftIcon="location-outline"
+            error={errors.address}
+            multiline
+            numberOfLines={3}
+            autoCapitalize="sentences"
+          />
 
-            <CustomInput
-              label="Email Address *"
-              placeholder="e.g. alex@example.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                if (errors.email) setErrors({ ...errors, email: null });
-              }}
-              error={errors.email}
-              icon="mail-outline"
-            />
-
-            <CustomInput
-              label="Phone Number *"
-              placeholder="e.g. +91 98765 43210"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={(text) => {
-                setPhone(text);
-                if (errors.phone) setErrors({ ...errors, phone: null });
-              }}
-              error={errors.phone}
-              icon="call-outline"
-            />
-
-            <CustomInput
-              label="Delivery Address *"
-              placeholder="Apartment, Street, Area, City, Pincode"
-              multiline={true}
-              numberOfLines={3}
-              value={address}
-              onChangeText={(text) => {
-                setAddress(text);
-                if (errors.address) setErrors({ ...errors, address: null });
-              }}
-              error={errors.address}
-              icon="location-outline"
-            />
-
-            <View style={styles.buttonRow}>
-              <CustomButton
-                title="Cancel"
-                type="outline"
-                onPress={() => navigation.goBack()}
-                style={styles.cancelBtn}
-              />
-
-              <CustomButton
-                title="Save Changes"
-                loading={loading}
-                onPress={handleSave}
-                style={styles.saveBtn}
-              />
+          {success && (
+            <View style={styles.successBanner}>
+              <Text style={styles.successText}>✅ Profile updated successfully!</Text>
             </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          )}
+
+          <CustomButton
+            title="Save Changes"
+            onPress={handleSave}
+            loading={loading}
+            style={{ marginTop: Spacing.sm }}
+          />
+          <CustomButton
+            title="Cancel"
+            variant="outline"
+            onPress={() => navigation.goBack()}
+            style={{ marginTop: Spacing.sm }}
+          />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: COLORS.background,
+  screen: { flex: 1, backgroundColor: Colors.background },
+  scroll: { flexGrow: 1, paddingBottom: Spacing.xxxl },
+  header: {
+    alignItems: 'center',
+    paddingTop: 40,
+    paddingBottom: Spacing.xxxl,
+    backgroundColor: '#080808',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: Spacing.xl,
   },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+  avatarCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.md,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  headerInfo: {
-    marginBottom: 20,
-  },
-  pageTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  pageSubtitle: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  formCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 20,
-    padding: 20,
+  avatarText: { color: Colors.white, fontSize: FontSizes.xxl, fontWeight: '800' },
+  title: { color: Colors.white, fontSize: FontSizes.xxl, fontWeight: '700', marginBottom: 4 },
+  subtitle: { color: Colors.textSecondary, fontSize: FontSizes.md },
+  form: { paddingHorizontal: Spacing.xl },
+  emailNote: { color: Colors.warning, fontSize: FontSizes.xs, marginTop: -8, marginBottom: Spacing.md },
+  successBanner: {
+    backgroundColor: Colors.primary + '20',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: Colors.primary,
   },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 10,
-  },
-  cancelBtn: {
-    flex: 1,
-  },
-  saveBtn: {
-    flex: 1.5,
-  },
+  successText: { color: Colors.primary, fontSize: FontSizes.sm, fontWeight: '600', textAlign: 'center' },
 });
+
+export default EditProfileScreen;
