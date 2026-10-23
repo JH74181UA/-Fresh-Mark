@@ -18,7 +18,7 @@ import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 
 export const ProfileScreen = ({ navigation }) => {
-  const { user, isAdmin, logout, quickSwitchRole } = useAuth();
+  const { user, isAdmin, isSuperAdmin, logout, quickSwitchRole } = useAuth();
   const { totalItemsCount } = useCart();
   const { favoritesCount } = useFavorites();
 
@@ -37,7 +37,39 @@ export const ProfileScreen = ({ navigation }) => {
     );
   };
 
-  // If Admin is viewing customer-only area
+  // If Super Admin or Admin is viewing customer-only area
+  if (isSuperAdmin) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <Header title="Super Admin Area" showMenu={true} showCart={false} />
+        <View style={styles.adminNoticeContainer}>
+          <View style={styles.adminNoticeCard}>
+            <View style={[styles.adminIconCircle, { backgroundColor: COLORS.superAdminBadgeLight }]}>
+              <Ionicons name="ribbon" size={40} color={COLORS.superAdminBadge} />
+            </View>
+            <Text style={styles.adminNoticeTitle}>Super Admin Session</Text>
+            <Text style={styles.adminNoticeDesc}>
+              You are signed in as Super Admin ({user?.name}). Manage master credentials, phone, email, and administrative controls in your dedicated Super Admin profile.
+            </Text>
+            <CustomButton
+              title="Open Super Admin Profile"
+              icon="person-circle-outline"
+              onPress={() => navigation.navigate('SuperAdminProfile')}
+              style={{ marginTop: 14, width: '100%', backgroundColor: COLORS.superAdminBadge }}
+            />
+            <CustomButton
+              title="Switch to Customer Role"
+              icon="swap-horizontal"
+              type="outline"
+              onPress={() => quickSwitchRole('customer')}
+              style={{ marginTop: 10, width: '100%' }}
+            />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (isAdmin) {
     return (
       <SafeAreaView style={styles.safeArea}>

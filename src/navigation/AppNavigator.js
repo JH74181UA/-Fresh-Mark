@@ -6,6 +6,8 @@ import { ProductDetailsScreen } from '../screens/ProductDetailsScreen';
 import { EditProfileScreen } from '../screens/EditProfileScreen';
 import { SignInScreen } from '../screens/SignInScreen';
 import { SignUpScreen } from '../screens/SignUpScreen';
+import { SuperAdminProfileScreen } from '../screens/SuperAdminProfileScreen';
+import { SuperAdminEditProfileScreen } from '../screens/SuperAdminEditProfileScreen';
 
 const Stack = createStackNavigator();
 
@@ -34,6 +36,23 @@ export const AppNavigator = () => {
         <Stack.Screen
           name="EditProfile"
           component={EditProfileScreen}
+          options={{
+            animationEnabled: true,
+          }}
+        />
+
+        {/* Super Admin Dedicated Profile & Edit Screens */}
+        <Stack.Screen
+          name="SuperAdminProfile"
+          component={SuperAdminProfileScreen}
+          options={{
+            animationEnabled: true,
+          }}
+        />
+
+        <Stack.Screen
+          name="SuperAdminEditProfile"
+          component={SuperAdminEditProfileScreen}
           options={{
             animationEnabled: true,
           }}

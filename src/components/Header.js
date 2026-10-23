@@ -48,13 +48,21 @@ export const Header = ({
         {user?.role && (
           <View style={[
             styles.rolePill,
-            user.role === 'admin' ? styles.adminPill : styles.customerPill
+            user.role === 'super_admin'
+              ? styles.superAdminPill
+              : user.role === 'admin'
+              ? styles.adminPill
+              : styles.customerPill
           ]}>
             <Text style={[
               styles.roleText,
-              user.role === 'admin' ? styles.adminRoleText : styles.customerRoleText
+              user.role === 'super_admin'
+                ? styles.superAdminRoleText
+                : user.role === 'admin'
+                ? styles.adminRoleText
+                : styles.customerRoleText
             ]}>
-              {user.role === 'admin' ? 'ADMIN' : 'CUSTOMER'}
+              {user.role === 'super_admin' ? 'SUPER ADMIN' : user.role === 'admin' ? 'ADMIN' : 'CUSTOMER'}
             </Text>
           </View>
         )}
@@ -124,6 +132,9 @@ const styles = StyleSheet.create({
   adminPill: {
     backgroundColor: COLORS.adminBadgeLight,
   },
+  superAdminPill: {
+    backgroundColor: COLORS.superAdminBadgeLight,
+  },
   roleText: {
     fontSize: 10,
     fontWeight: '800',
@@ -134,6 +145,9 @@ const styles = StyleSheet.create({
   },
   adminRoleText: {
     color: COLORS.adminBadge,
+  },
+  superAdminRoleText: {
+    color: COLORS.superAdminBadge,
   },
   rightContainer: {
     width: 44,

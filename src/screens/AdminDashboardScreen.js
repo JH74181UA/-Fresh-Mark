@@ -43,8 +43,17 @@ export const AdminDashboardScreen = ({ navigation }) => {
               <Text style={styles.adminSub}>{user?.email || 'admin@freshmart.com'}</Text>
             </View>
           </View>
-          <View style={styles.roleChip}>
-            <Text style={styles.roleChipText}>Store Manager Privileges</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+            <View style={styles.roleChip}>
+              <Text style={styles.roleChipText}>Store Manager Privileges</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.superAdminProfileBtn}
+              onPress={() => navigation.navigate('SuperAdminProfile')}
+            >
+              <Ionicons name="ribbon" size={14} color={COLORS.superAdminBadge} />
+              <Text style={styles.superAdminProfileBtnText}>Super Admin Profile</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -179,7 +188,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   roleChip: {
-    marginTop: 12,
     alignSelf: 'flex-start',
     backgroundColor: COLORS.adminBadgeLight,
     paddingHorizontal: 10,
@@ -190,6 +198,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: COLORS.adminBadge,
+  },
+  superAdminProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.superAdminBadgeLight,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  superAdminProfileBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.superAdminBadge,
   },
   metricsGrid: {
     flexDirection: 'row',

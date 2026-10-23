@@ -63,7 +63,11 @@ export const SignInScreen = ({ navigation }) => {
 
   // Quick 1-click test credentials for MCA exam grading
   const handleQuickDemo = (demoRole) => {
-    if (demoRole === 'admin') {
+    if (demoRole === 'super_admin') {
+      setEmail('superadmin@freshmart.com');
+      setPassword('superadmin123');
+      setRole('super_admin');
+    } else if (demoRole === 'admin') {
       setEmail('admin@freshmart.com');
       setPassword('admin123');
       setRole('admin');
@@ -105,13 +109,13 @@ export const SignInScreen = ({ navigation }) => {
             >
               <Ionicons
                 name="person"
-                size={16}
+                size={14}
                 color={role === 'customer' ? COLORS.white : COLORS.textDark}
               />
               <Text
                 style={[styles.roleTabText, role === 'customer' && styles.activeRoleTabText]}
               >
-                Customer Login
+                Customer
               </Text>
             </TouchableOpacity>
 
@@ -121,13 +125,29 @@ export const SignInScreen = ({ navigation }) => {
             >
               <Ionicons
                 name="shield-checkmark"
-                size={16}
+                size={14}
                 color={role === 'admin' ? COLORS.white : COLORS.textDark}
               />
               <Text
                 style={[styles.roleTabText, role === 'admin' && styles.activeRoleTabText]}
               >
-                Admin Login
+                Admin
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.roleTab, role === 'super_admin' && styles.activeSuperAdminTab]}
+              onPress={() => setRole('super_admin')}
+            >
+              <Ionicons
+                name="ribbon"
+                size={14}
+                color={role === 'super_admin' ? COLORS.white : COLORS.textDark}
+              />
+              <Text
+                style={[styles.roleTabText, role === 'super_admin' && styles.activeRoleTabText]}
+              >
+                Super Admin
               </Text>
             </TouchableOpacity>
           </View>
@@ -190,7 +210,15 @@ export const SignInScreen = ({ navigation }) => {
                 onPress={() => handleQuickDemo('admin')}
               >
                 <Ionicons name="shield-checkmark" size={18} color={COLORS.adminBadge} />
-                <Text style={styles.demoPillAdminText}>Fill Admin Credentials</Text>
+                <Text style={styles.demoPillAdminText}>Fill Store Admin Credentials</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.demoPillSuperAdmin}
+                onPress={() => handleQuickDemo('super_admin')}
+              >
+                <Ionicons name="ribbon" size={18} color={COLORS.superAdminBadge} />
+                <Text style={styles.demoPillSuperAdminText}>Fill Super Admin Credentials</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -265,6 +293,9 @@ const styles = StyleSheet.create({
   activeAdminTab: {
     backgroundColor: COLORS.adminBadge,
   },
+  activeSuperAdminTab: {
+    backgroundColor: COLORS.superAdminBadge,
+  },
   roleTabText: {
     fontSize: 13,
     fontWeight: '700',
@@ -327,6 +358,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: COLORS.adminBadge,
+  },
+  demoPillSuperAdmin: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: COLORS.superAdminBadgeLight,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  demoPillSuperAdminText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.superAdminBadge,
   },
   footerRow: {
     flexDirection: 'row',

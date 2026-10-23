@@ -97,6 +97,28 @@ export const HomeScreen = ({ navigation }) => {
                     Admin
                   </Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.roleToggleBtn,
+                    user?.role === 'super_admin' ? styles.activeSuperAdminRoleBtn : styles.inactiveRoleBtn,
+                  ]}
+                  onPress={() => quickSwitchRole('super_admin')}
+                >
+                  <Ionicons
+                    name="ribbon"
+                    size={14}
+                    color={user?.role === 'super_admin' ? COLORS.white : COLORS.textDark}
+                  />
+                  <Text
+                    style={[
+                      styles.roleBtnText,
+                      user?.role === 'super_admin' && styles.activeRoleBtnText,
+                    ]}
+                  >
+                    Super Admin
+                  </Text>
+                </TouchableOpacity>
               </View>
             ) : (
               <View style={styles.loginButtonsRow}>
@@ -279,6 +301,9 @@ const styles = StyleSheet.create({
   },
   activeAdminRoleBtn: {
     backgroundColor: COLORS.adminBadge,
+  },
+  activeSuperAdminRoleBtn: {
+    backgroundColor: COLORS.superAdminBadge,
   },
   inactiveRoleBtn: {
     backgroundColor: COLORS.surfaceVariant,

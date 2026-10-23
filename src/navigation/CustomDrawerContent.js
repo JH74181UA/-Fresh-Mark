@@ -7,10 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import {
-  DrawerContentScrollView,
-  DrawerItemList,
-} from '@react-navigation/drawer';
+import { DrawerContentScrollView } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/colors';
 import { useAuth } from '../context/AuthContext';
@@ -18,7 +15,7 @@ import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 
 export const CustomDrawerContent = (props) => {
-  const { user, isAdmin, isAuthenticated, logout, quickSwitchRole } = useAuth();
+  const { user, isAdmin, isSuperAdmin, isAuthenticated, logout, quickSwitchRole } = useAuth();
   const { totalItemsCount } = useCart();
   const { favoritesCount } = useFavorites();
   const { navigation } = props;
@@ -41,6 +38,24 @@ export const CustomDrawerContent = (props) => {
     );
   };
 
+  const getRoleBadgeStyle = () => {
+    if (isSuperAdmin) return styles.superAdminBadge;
+    if (isAdmin) return styles.adminBadge;
+    return styles.customerBadge;
+  };
+
+  const getRoleTextStyle = () => {
+    if (isSuperAdmin) return styles.superAdminBadgeText;
+    if (isAdmin) return styles.adminBadgeText;
+    return styles.customerBadgeText;
+  };
+
+  const getRoleTitle = () => {
+    if (isSuperAdmin) return 'SUPER ADMIN';
+    if (isAdmin) return 'STORE ADMIN';
+    return 'CUSTOMER ACCOUNT';
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
@@ -48,8 +63,15 @@ export const CustomDrawerContent = (props) => {
         <View style={styles.profileHeader}>
           <View style={styles.avatarRow}>
             <Image
-              source={{ uri: user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80' }}
-              style={styles.avatar}
+              source={{
+                uri:
+                  user?.avatar ||
+                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+              }}
+              style={[
+                styles.avatar,
+                isSuperAdmin && { borderColor: COLORS.superAdminBadge, borderWidth: 3 },
+              ]}
             />
             <View style={styles.userInfo}>
               <Text style={styles.userName} numberOfLines={1}>
@@ -58,44 +80,42 @@ export const CustomDrawerContent = (props) => {
               <Text style={styles.userEmail} numberOfLines={1}>
                 {user?.email || 'guest@freshmart.com'}
               </Text>
-              <View
-                style={[
-                  styles.roleBadge,
-                  isAdmin ? styles.adminBadge : styles.customerBadge,
-                ]}
-              >
+              <View style={[styles.roleBadge, getRoleBadgeStyle()]}>
                 <Ionicons
-                  name={isAdmin ? 'shield-checkmark' : 'person'}
+                  name={isSuperAdmin ? 'ribbon' : isAdmin ? 'shield-checkmark' : 'person'}
                   size={12}
-                  color={isAdmin ? COLORS.adminBadge : COLORS.customerBadge}
+                  color={
+                    isSuperAdmin
+                      ? COLORS.superAdminBadge
+                      : isAdmin
+                      ? COLORS.adminBadge
+                      : COLORS.customerBadge
+                  }
                 />
-                <Text
-                  style={[
-                    styles.roleBadgeText,
-                    isAdmin ? styles.adminBadgeText : styles.customerBadgeText,
-                  ]}
-                >
-                  {isAdmin ? 'ADMIN ACCOUNT' : 'CUSTOMER ACCOUNT'}
+                <Text style={[styles.roleBadgeText, getRoleTextStyle()]}>
+                  {getRoleTitle()}
                 </Text>
               </View>
             </View>
           </View>
 
-          {/* Quick Role Switcher for MCA Exam Testing */}
+          {/* Quick Role Switcher for MCA Exam Testing (3 Roles) */}
           <View style={styles.roleSwitchCard}>
-            <Text style={styles.roleSwitchLabel}>Exam Fast Switch:</Text>
+            <Text style={styles.roleSwitchLabel}>Exam Fast Role Switch:</Text>
             <View style={styles.switchButtonsRow}>
               <TouchableOpacity
                 style={[
                   styles.switchBtn,
-                  !isAdmin ? styles.switchBtnActive : styles.switchBtnInactive,
+                  user?.role === 'customer' ? styles.switchBtnActive : styles.switchBtnInactive,
                 ]}
                 onPress={() => quickSwitchRole('customer')}
               >
                 <Text
                   style={[
                     styles.switchBtnText,
-                    !isAdmin ? styles.switchBtnTextActive : styles.switchBtnTextInactive,
+                    user?.role === 'customer'
+                      ? styles.switchBtnTextActive
+                      : styles.switchBtnTextInactive,
                   ]}
                 >
                   Customer
@@ -105,17 +125,38 @@ export const CustomDrawerContent = (props) => {
               <TouchableOpacity
                 style={[
                   styles.switchBtn,
-                  isAdmin ? styles.switchBtnAdminActive : styles.switchBtnInactive,
+                  user?.role === 'admin' ? styles.switchBtnAdminActive : styles.switchBtnInactive,
                 ]}
                 onPress={() => quickSwitchRole('admin')}
               >
                 <Text
                   style={[
                     styles.switchBtnText,
-                    isAdmin ? styles.switchBtnTextActive : styles.switchBtnTextInactive,
+                    user?.role === 'admin'
+                      ? styles.switchBtnTextActive
+                      : styles.switchBtnTextInactive,
                   ]}
                 >
                   Admin
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.switchBtn,
+                  isSuperAdmin ? styles.switchBtnSuperAdminActive : styles.switchBtnInactive,
+                ]}
+                onPress={() => quickSwitchRole('super_admin')}
+              >
+                <Text
+                  style={[
+                    styles.switchBtnText,
+                    isSuperAdmin
+                      ? styles.switchBtnTextActive
+                      : styles.switchBtnTextInactive,
+                  ]}
+                >
+                  Super Admin
                 </Text>
               </TouchableOpacity>
             </View>
@@ -129,7 +170,7 @@ export const CustomDrawerContent = (props) => {
             onPress={() => navigation.navigate('HomeTab')}
           >
             <Ionicons name="home-outline" size={22} color={COLORS.primary} style={styles.navIcon} />
-            <Text style={styles.navItemText}>Home Screen</Text>
+            <Text style={styles.navItemText}>Home Store</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -174,6 +215,37 @@ export const CustomDrawerContent = (props) => {
             <Text style={styles.navItemText}>Customer Profile</Text>
           </TouchableOpacity>
 
+          {/* Super Admin Profile Screen Link */}
+          <TouchableOpacity
+            style={[
+              styles.navItem,
+              isSuperAdmin && { backgroundColor: COLORS.superAdminBadgeLight },
+            ]}
+            onPress={() => navigation.navigate('SuperAdminProfile')}
+          >
+            <Ionicons
+              name="ribbon-outline"
+              size={22}
+              color={COLORS.superAdminBadge}
+              style={styles.navIcon}
+            />
+            <Text
+              style={[
+                styles.navItemText,
+                { color: COLORS.superAdminBadge, fontWeight: '700' },
+              ]}
+            >
+              Super Admin Profile
+            </Text>
+            {isSuperAdmin && (
+              <View style={[styles.navBadge, { backgroundColor: COLORS.superAdminBadge }]}>
+                <Text style={[styles.navBadgeText, { color: COLORS.white, fontSize: 9 }]}>
+                  PRO
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
           {isAdmin && (
             <TouchableOpacity
               style={styles.navItem}
@@ -198,7 +270,7 @@ export const CustomDrawerContent = (props) => {
             onPress={() => navigation.navigate('SignIn')}
           >
             <Ionicons name="log-in-outline" size={22} color={COLORS.textDark} style={styles.navIcon} />
-            <Text style={styles.navItemText}>Sign In with Role</Text>
+            <Text style={styles.navItemText}>Sign In / Switch Account</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -206,14 +278,14 @@ export const CustomDrawerContent = (props) => {
             onPress={() => navigation.navigate('SignUp')}
           >
             <Ionicons name="person-add-outline" size={22} color={COLORS.textDark} style={styles.navIcon} />
-            <Text style={styles.navItemText}>Create New Account</Text>
+            <Text style={styles.navItemText}>Register New Account</Text>
           </TouchableOpacity>
         </View>
 
         {/* MCA Exam Tag Footer */}
         <View style={styles.examFooterBox}>
-          <Text style={styles.examFooterTitle}>MCA Sem III Model Exam</Text>
-          <Text style={styles.examFooterSub}>October 2026 • React Native App</Text>
+          <Text style={styles.examFooterTitle}>FreshMart • Super Admin Edition</Text>
+          <Text style={styles.examFooterSub}>October 2026 • React Native Expo</Text>
           <Text style={styles.examFooterTech}>Stack + Tab + Drawer Navigation</Text>
         </View>
       </DrawerContentScrollView>
@@ -223,7 +295,7 @@ export const CustomDrawerContent = (props) => {
         {isAuthenticated ? (
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
-            <Text style={styles.logoutBtnText}>Sign Out</Text>
+            <Text style={styles.logoutBtnText}>Sign Out ({getRoleTitle()})</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -291,6 +363,9 @@ const styles = StyleSheet.create({
   adminBadge: {
     backgroundColor: COLORS.adminBadgeLight,
   },
+  superAdminBadge: {
+    backgroundColor: COLORS.superAdminBadgeLight,
+  },
   roleBadgeText: {
     fontSize: 10,
     fontWeight: '800',
@@ -301,6 +376,9 @@ const styles = StyleSheet.create({
   },
   adminBadgeText: {
     color: COLORS.adminBadge,
+  },
+  superAdminBadgeText: {
+    color: COLORS.superAdminBadge,
   },
   roleSwitchCard: {
     marginTop: 14,
@@ -316,7 +394,7 @@ const styles = StyleSheet.create({
   },
   switchButtonsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   switchBtn: {
     flex: 1,
@@ -330,11 +408,14 @@ const styles = StyleSheet.create({
   switchBtnAdminActive: {
     backgroundColor: COLORS.adminBadge,
   },
+  switchBtnSuperAdminActive: {
+    backgroundColor: COLORS.superAdminBadge,
+  },
   switchBtnInactive: {
     backgroundColor: COLORS.surfaceVariant,
   },
   switchBtnText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
   },
   switchBtnTextActive: {
@@ -350,7 +431,7 @@ const styles = StyleSheet.create({
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 11,
     paddingHorizontal: 12,
     borderRadius: 12,
     marginVertical: 2,
@@ -360,7 +441,7 @@ const styles = StyleSheet.create({
   },
   navItemText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: COLORS.textDark,
   },
@@ -421,7 +502,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   logoutBtnText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: COLORS.danger,
   },

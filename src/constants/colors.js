@@ -20,10 +20,13 @@ export const COLORS = {
   warning: '#F59E0B',       // Orange/Yellow for alerts
   success: '#10B981',       // Emerald for in-stock & savings
   
-  adminBadge: '#6366F1',    // Indigo for Admin role
-  adminBadgeLight: '#EEF2FF',
   customerBadge: '#10B981', // Green for Customer role
   customerBadgeLight: '#ECFDF5',
+  adminBadge: '#6366F1',    // Indigo for Admin role
+  adminBadgeLight: '#EEF2FF',
+  superAdminBadge: '#7C3AED', // Deep Violet / Royal Purple for Super Admin
+  superAdminBadgeLight: '#F5F3FF',
+  superAdminGold: '#D97706',
 
   overlay: 'rgba(0, 0, 0, 0.4)',
   white: '#FFFFFF',

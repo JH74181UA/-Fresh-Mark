@@ -259,3 +259,17 @@ export const ADMIN_USER = {
   avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
   memberSince: 'January 2024'
 };
+
+export const SUPER_ADMIN_USER = {
+  id: 'spr-001',
+  name: 'Dr. Evelyn Vance',
+  username: 'evelyn.superadmin',
+  email: 'superadmin@freshmart.com',
+  phone: '+91 99887 76655',
+  address: 'Executive Headquarters, Suite 1200, MG Road Tech Towers, Bangalore - 560001',
+  role: 'super_admin',
+  status: 'Active / Verified Super Admin',
+  avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
+  memberSince: 'January 2022',
+  permissions: ['ALL_PRIVILEGES', 'MANAGE_ADMINS', 'CATALOG_OVERRIDE', 'FINANCIAL_REPORTS', 'SECURITY_SETTINGS'],
+};
