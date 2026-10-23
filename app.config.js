@@ -7,7 +7,7 @@ module.exports = ({ config }) => {
     ...config,
     experiments: {
       ...(config.experiments || {}),
-      baseUrl: isDeploy ? '/Fresh-mark' : '',
+      baseUrl: isDeploy ? '/-Fresh-Mark' : '',
     },
   };
 };

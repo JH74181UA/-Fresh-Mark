@@ -3,9 +3,9 @@ const path = require('path');
 const os = require('os');
 const { execSync } = require('child_process');
 
-const REPO_OWNER = 'Lalitha0518';
-const REPO_NAME = 'Fresh-mark';
-const DEFAULT_REMOTE_URL = `https://${REPO_OWNER}@github.com/${REPO_OWNER}/${REPO_NAME}.git`;
+const REPO_OWNER = 'JH74181UA';
+const REPO_NAME = '-Fresh-Mark';
+const DEFAULT_REMOTE_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}.git`;
 
 function run(cmd, cwd) {
   console.log(`> ${cmd} (in ${cwd || 'root'})`);
