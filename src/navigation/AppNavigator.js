@@ -230,7 +230,11 @@ const AppNavigator = () => {
   const { isAuthenticated, user } = useApp();
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      documentTitle={{
+        formatter: (options, route) => 'FreshMart Grocery',
+      }}
+    >
       {!isAuthenticated ? (
         <AuthStack />
       ) : user?.role === 'admin' ? (
